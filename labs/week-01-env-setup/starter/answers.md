@@ -59,3 +59,4 @@ Tanulság: érdemes több kölönböző futás eredményét vizsgálni különb�
 
 - Végül a kézi `n_estimators=300, max_depth=8` beállítást tartottam meg (F1 = 0.6032), de ez is jól mutatja a feladat végén feszegetett problémát: már három próbálkozás után is papírra kellett írnom, melyik szám melyik beállításhoz tartozik.
 
+
