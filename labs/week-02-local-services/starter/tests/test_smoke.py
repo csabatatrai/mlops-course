@@ -7,6 +7,7 @@ MLflow settings. Any test that would require a live MLflow server is
 decorated with @pytest.mark.skip so the starter passes out of the box.
 """
 import pytest
+import mlflow
 
 from week_02_local_services.config import load_settings
 from week_02_local_services.data import build_dataset, load_dataframe
@@ -59,25 +60,23 @@ def test_seed_42_metrics() -> None:
     assert metrics["f1"] == pytest.approx(0.5785, abs=0.001)
     assert metrics["accuracy"] == pytest.approx(0.7344, abs=0.001)
 
-
-@pytest.mark.skip(
-    reason="Exercise 3 — implement MLflow logging in cli.py, then remove this skip."
-)
+#! Már nem kell a skip dekorátor, mert a main() már logol MLflow-ba, így a teszt lefut. A skip azért volt itt, hogy a starter kód is lefusson a pipeline Exercise 3 megírása előtt.
+# @pytest.mark.skip(
+#     reason="Exercise 3 — implement MLflow logging in cli.py, then remove this skip."
+# )
 def test_mlflow_run_logged() -> None:
-    """After Exercise 3: confirm that main() logs a run to the tracking server.
+    """After Exercise 3: confirm that main() logs a run to the tracking server."""
+    from week_02_local_services.cli import main
 
-    TODO(student) — Exercise 3, step 4:
-    1. Ensure the stack is running: docker compose up -d --wait
-    2. Delete the @pytest.mark.skip line above.
-    3. Implement this test:
-       - Call main() (from week_02_local_services.cli import main)
-       - Use the MLflow client to query the last run in the experiment:
-           import mlflow
-           client = mlflow.tracking.MlflowClient(settings.mlflow_tracking_uri)
-           runs = client.search_runs(experiment_ids=[...])
-           assert len(runs) > 0
-       - Assert the run has params and at least one metric.
-    Note: this test requires a running MLflow server. Guard it with a
-    reachability check or document that it needs the stack.
-    """
-    raise NotImplementedError
+    settings = load_settings()
+    main()
+
+    client = mlflow.tracking.MlflowClient(settings.mlflow_tracking_uri)
+    experiment = client.get_experiment_by_name(settings.mlflow_experiment_name)
+    runs = client.search_runs(experiment_ids=[experiment.experiment_id])
+
+    assert len(runs) > 0
+    latest_run = runs[0]
+    assert "random_seed" in latest_run.data.params
+    assert "accuracy" in latest_run.data.metrics
+
