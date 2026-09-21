@@ -2,7 +2,8 @@
 .env
 
 # Your written exercise answers
-answers.md
+#! Előző heti nem volt alapból gitignore-olva, ezért kivettem
+!answers.md
 
 # Python virtual environment and caches
 .venv/
