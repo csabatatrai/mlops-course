@@ -41,6 +41,11 @@ def roc_curve_figure(model, x_test, y_test, *, label: str = "model") -> plt.Figu
     """
     fig, ax = plt.subplots(figsize=(5, 5))
     # Placeholder — a valid but empty Figure, so the starter's tests still run.
+    RocCurveDisplay.from_estimator(
+        model, x_test, y_test, ax=ax, name=label, plot_chance_level=True
+    )
+    ax.set_title("ROC Curve")
+    fig.tight_layout()
     return fig
 
 
@@ -63,4 +68,14 @@ def confusion_matrix_figure(model, x_test, y_test) -> plt.Figure:
     """
     fig, ax = plt.subplots(figsize=(5, 5))
     # Placeholder — a valid but empty Figure, so the starter's tests still run.
+    ConfusionMatrixDisplay.from_estimator(
+       model,
+       x_test,
+       y_test,
+       ax=ax,
+       display_labels=["no diabetes", "diabetes"],
+       colorbar=False,
+    )
+    ax.set_title("Confusion Matrix")
+    fig.tight_layout()
     return fig
