@@ -50,8 +50,8 @@ def test_single_run_logged(live_settings) -> None:
     assert "plots/roc_curve.png" in plot_files
     assert "plots/confusion_matrix.png" in plot_files
 
-
-@pytest.mark.skip(reason="Exercise 3 — implement run_sweep(), then delete this skip marker.")
+#! nem kell skippelni, mert a 3. feladat már kész
+# @pytest.mark.skip(reason="Exercise 3 — implement run_sweep(), then delete this skip marker.")
 def test_sweep_creates_child_run_per_cell(live_settings, sweep_results) -> None:
     """Exercise 3: one child run per grid cell, all distinct, all tagged."""
     assert len(sweep_results) == len(SWEEP_GRID)
@@ -64,8 +64,8 @@ def test_sweep_creates_child_run_per_cell(live_settings, sweep_results) -> None:
         # Children know their parent — this is what makes the UI tree work.
         assert "mlflow.parentRunId" in run.data.tags
 
-
-@pytest.mark.skip(reason="Exercise 3 — implement run_sweep(), then delete this skip marker.")
+#! nem kell skippelni, mert a 3. feladat már kész
+# @pytest.mark.skip(reason="Exercise 3 — implement run_sweep(), then delete this skip marker.")
 def test_sweep_preserves_locked_baseline(live_settings, sweep_results) -> None:
     """Exercise 3: the two default cells still reproduce the course's pins.
 

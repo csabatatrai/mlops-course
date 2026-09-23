@@ -187,7 +187,7 @@ def log_training_run(
         cm_fig = confusion_matrix_figure(model, x_test, y_test)
         mlflow.log_figure(cm_fig, "plots/confusion_matrix.png")
         plt.close(cm_fig)
-        
+
         # ── The model itself ──────────────────────────────────────────────────
         # TODO(student) — Exercise 1d:
         # mlflow.sklearn.log_model(
@@ -246,7 +246,11 @@ def run_sweep(settings: Settings) -> list[RunResult]:
             }
         )
 
-        # TODO(student) — Exercise 3: one child run per grid cell.
+        for family, hyperparams in SWEEP_GRID:
+            result = log_training_run(
+                settings, family, hyperparams, sweep_tag=SWEEP_TAG, nested=True
+            )
+            results.append(result)
 
         # Record the winner on the parent, so the sweep summarises itself.
         if results:
