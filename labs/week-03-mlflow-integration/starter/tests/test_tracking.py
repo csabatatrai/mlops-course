@@ -82,8 +82,8 @@ def test_sweep_preserves_locked_baseline(live_settings, sweep_results) -> None:
         0.6066, abs=0.001
     )
 
-
-@pytest.mark.skip(reason="Exercise 4 — implement search_sweep_runs(), then delete this skip marker.")
+#! nem kell skippelni, mert a 4. feladat már kész
+# @pytest.mark.skip(reason="Exercise 4 — implement search_sweep_runs(), then delete this skip marker.")
 def test_search_and_best_run(live_settings, sweep_results) -> None:
     """Exercise 4: the query returns the latest sweep's children, ranked."""
     frame = search_sweep_runs(live_settings)
@@ -99,8 +99,8 @@ def test_search_and_best_run(live_settings, sweep_results) -> None:
     # The metric clause of the filter is really applied.
     assert search_sweep_runs(live_settings, min_f1=0.99).empty
 
-
-@pytest.mark.skip(reason="Exercise 4 — implement search_sweep_runs(), then delete this skip marker.")
+#! nem kell skippelni, mert a 4. feladat már kész
+# @pytest.mark.skip(reason="Exercise 4 — implement search_sweep_runs(), then delete this skip marker.")
 def test_search_ranks_by_any_metric(live_settings, sweep_results) -> None:
     """Exercise 4: ranking by ROC-AUC picks a different winner than F1."""
     frame = search_sweep_runs(live_settings, metric="roc_auc")

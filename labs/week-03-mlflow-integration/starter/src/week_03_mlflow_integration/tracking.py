@@ -317,9 +317,14 @@ def search_sweep_runs(
     parent_id = latest_sweep_id(settings)
     if parent_id is None:
         return pd.DataFrame()
-    _ = (metric, min_f1)  # silence unused-argument warnings until you implement
     # TODO(student) — Exercise 4: the search_runs(...) call described above.
-    return pd.DataFrame()
+    return mlflow.search_runs(
+        experiment_names=[settings.mlflow_experiment_name],
+        filter_string=f"tags.mlflow.parentRunId = '{parent_id}' and metrics.f1 > {min_f1}",
+        order_by=[f"metrics.{metric} DESC"],
+        max_results=50,
+        output_format="pandas",
+    )
 
 
 def find_best_run(settings: Settings, *, metric: str = "f1") -> str:
