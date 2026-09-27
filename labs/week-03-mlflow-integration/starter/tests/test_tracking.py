@@ -113,7 +113,7 @@ def test_search_ranks_by_any_metric(live_settings, sweep_results) -> None:
         live_settings, metric="roc_auc"
     )
 
-#! nem kell skippelni, mert a 5. feladat már kész
+#! nem kell skippelni, mert a 6. feladat már kész
 # @pytest.mark.skip(reason="Exercise 6, part 3 — record git_dirty, then delete this skip marker.")
 def test_run_records_working_tree_state(live_settings, sweep_results) -> None:
     """Exercise 6, part 3: every run says whether its git_commit is the truth."""
