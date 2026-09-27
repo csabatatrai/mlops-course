@@ -109,7 +109,32 @@ def promote_to_staging(
     """
     client = MlflowClient(settings.mlflow_tracking_uri)
     name = settings.registered_model_name
-    _ = (client, name, version, reason, datetime, timezone)  # until you implement
+    # A. Evidence from the source run
+    model_version = client.get_model_version(name, version)
+    run = client.get_run(model_version.run_id)
+    metrics = run.data.metrics
+
+    # B. Version tags (evidence) + registered model tags
+    evidence = {
+        "validation_f1": f"{metrics['f1']:.4f}",
+        "validation_roc_auc": f"{metrics['roc_auc']:.4f}",
+        "promoted_by": settings.model_owner,
+        "promoted_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+    }
+    if reason:
+        evidence["promotion_reason"] = reason
+    for key, value in evidence.items():
+        client.set_model_version_tag(name, version, key, value)
+    client.set_registered_model_tag(name, "owner", settings.model_owner)
+    client.set_registered_model_tag(name, "task", "diabetes-binary-classification")
+
+    # C. Move both aliases
+    for alias in (settings.model_alias, "champion"):
+        client.set_registered_model_alias(name, alias, version)
+
+    # D. What the alias resolves to now
+    return client.get_model_version_by_alias(name, settings.model_alias)
+
 
     return None  # placeholder — the CLI reports this as "not implemented yet"
 
@@ -142,7 +167,29 @@ def trace_alias(settings: Settings) -> dict:
     """
     client = MlflowClient(settings.mlflow_tracking_uri)
     name, alias = settings.registered_model_name, settings.model_alias
-    _ = (client, name, alias)  # silence the unused-variable warning until you implement
+    # Hop 1: alias -> version
+    model_version = client.get_model_version_by_alias(name, alias)
+    # Hop 2: version -> run
+    if not model_version.run_id:
+        raise RuntimeError(
+            f"Version {model_version.version} has no source run: the chain is broken."
+        )
+    # Hop 3: run -> evidence
+    run = client.get_run(model_version.run_id)
+
+    return {
+        "model_uri": f"models:/{name}@{alias}",
+        "version": model_version.version,
+        "aliases": list(model_version.aliases),
+        "run_id": run.info.run_id,
+        "run_name": run.data.tags.get("mlflow.runName", ""),
+        "git_commit": run.data.tags.get("git_commit", "unknown"),
+        "git_dirty": run.data.tags.get("git_dirty"),
+        "params": run.data.params,
+        "metrics": run.data.metrics,
+        "version_tags": model_version.tags,
+    }
+
 
     return {}  # placeholder — the CLI reports this as "not implemented yet"
 

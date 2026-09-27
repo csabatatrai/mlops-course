@@ -156,12 +156,14 @@ def log_training_run(
         #   "sweep":        sweep_tag          <- ONLY when sweep_tag is not None
         # Params are for reproducing a run; tags are for FINDING it later.
         #
-        tags = {"model_family": family, "git_commit": git_commit()}
+        tags = {
+            "model_family": family,
+            "git_commit": git_commit(),
+            "git_dirty": git_dirty()
+        }
         if sweep_tag is not None:
             tags["sweep"] = sweep_tag
         mlflow.set_tags(tags)
-
-        # TODO(student) — Exercise 6, part 3: you will come back to this call.
 
         model = build_model(family, hyperparams, settings)
         model.fit(x_train, y_train)
