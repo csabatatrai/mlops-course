@@ -13,8 +13,8 @@ from week_03_mlflow_integration.registry import load_aliased_model, trace_alias
 
 pytestmark = pytest.mark.live
 
-
-@pytest.mark.skip(reason="Exercise 5 — implement register_best_model(), then delete this skip marker.")
+#! nem kell skippelni, mert a 5. feladat már kész
+# @pytest.mark.skip(reason="Exercise 5 — implement register_best_model(), then delete this skip marker.")
 def test_registration_creates_version_with_run_id(live_settings, staging_version) -> None:
     """Exercise 5: the version exists AND links back to its source run.
 
