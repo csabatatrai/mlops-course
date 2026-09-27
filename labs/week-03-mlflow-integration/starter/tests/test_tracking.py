@@ -21,7 +21,7 @@ from week_03_mlflow_integration.tracking import (
 pytestmark = pytest.mark.live
 
 
-@pytest.mark.skip(reason="Exercises 1-2 — implement log_training_run(), then delete this skip marker.")
+# @pytest.mark.skip(reason="Exercises 1-2 — implement log_training_run(), then delete this skip marker.")
 def test_single_run_logged(live_settings) -> None:
     """Exercise 1-2: one run carries params, metrics, tags, and both plots."""
     from week_03_mlflow_integration.tracking import connect

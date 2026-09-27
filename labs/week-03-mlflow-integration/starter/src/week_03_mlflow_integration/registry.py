@@ -190,10 +190,6 @@ def trace_alias(settings: Settings) -> dict:
         "version_tags": model_version.tags,
     }
 
-
-    return {}  # placeholder — the CLI reports this as "not implemented yet"
-
-
 def roll_back(
     settings: Settings, to_version: str, reason: str
 ) -> tuple[str, ModelVersion] | None:
@@ -220,8 +216,41 @@ def roll_back(
        now resolves to).
     Delete the Exercise 7 skip markers in tests/test_registry.py.
     """
-    _ = (settings, to_version, reason)  # silence unused-argument warnings until you implement
-    return None  # placeholder — the CLI reports this as "not implemented yet"
+    client = MlflowClient(settings.mlflow_tracking_uri)
+    name = settings.registered_model_name
+
+    # 1. Where the alias points now
+    current = client.get_model_version_by_alias(name, settings.model_alias)
+
+    # 2. Refuse before anything moves
+    target = client.get_model_version(name, to_version)
+    if target.version == current.version:
+        raise ValueError(
+            f"Version {to_version} is already @{settings.model_alias}."
+        )
+    if "promoted_at" not in target.tags:
+        raise ValueError(
+            f"Version {to_version} was never promoted, "
+            "so it is not a known-good rollback target."
+        )
+
+    # 3. Record why, on the version we roll back FROM
+    rollback_tags = {
+        "rolled_back_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "rolled_back_to": target.version,
+        "rollback_reason": reason,
+    }
+    for key, value in rollback_tags.items():
+        client.set_model_version_tag(name, current.version, key, value)
+
+    # 4. Move both aliases
+    for alias in (settings.model_alias, "champion"):
+        client.set_registered_model_alias(name, alias, target.version)
+
+    # 5. (rolled back from, what the alias resolves to now)
+    return current.version, client.get_model_version_by_alias(
+        name, settings.model_alias
+    )
 
 
 def load_aliased_model(settings: Settings):

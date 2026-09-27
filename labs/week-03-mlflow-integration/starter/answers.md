@@ -146,3 +146,140 @@ A rés lezárásához az adatot is verziózni kellene: az adatfájl tartalom-has
 azonosítója (például DVC-vel, MinIO-val mint tárolóval) kerüljön be a run paraméterei vagy
 tagjei közé, így a lánc a fájlútvonal helyett egy konkrét adat-snapshotnál érne véget, amit
 vissza is lehet állítani.
+
+## Exercise 7
+
+A README a 3-as verziót tekinti hibásnak, nálam viszont a 4-es volt az aktív, ezért
+a 4-esről gördítettem vissza:
+
+```text
+make rollback VERSION=1 REASON="v4 misbehaves in staging"
+Refused: Version 1 was never promoted, so it is not a known-good rollback target.
+
+make rollback VERSION=2 REASON="v4 misbehaves in staging"
+Rolled back from version 4 to version 2.
+Version 2 now carries aliases: ['champion', 'staging']
+```
+
+Az 1-es verziót a rendszer elutasította, mert sosem volt promotálva: nincs `promoted_at`
+tagje, így senki sem nézte át, és egy "rollback" rá valójában egy át nem nézett promóció
+lenne.
+
+A registry alias-táblája a rollback után:
+
+```text
+        name         |  alias   | version
+---------------------+----------+---------
+ diabetes-classifier | staging  |       2
+ diabetes-classifier | champion |       2
+```
+
+### 1. Mi változott a rollbackkel, és mi nem?
+
+**Változott:** két pointer. A `staging` és a `champion` alias a 4-es verzióról a 2-esre
+került, és a 4-es verzió kapott három taget (`rolled_back_at`, `rolled_back_to = 2`,
+`rollback_reason = "v4 misbehaves in staging"`).
+
+**Nem változott:** minden más. Egyik verzió sem módosult és egyik sem törlődött, a
+modellfájlok a MinIO-ban ugyanazok, a runok, a paraméterek és a metrikák érintetlenek.
+A 4-es verzió is megmaradt, bármikor vissza lehet rá állni.
+
+Egy szerver, amely a `models:/diabetes-classifier@champion` URI-ból tölt, a saját kódján
+és konfigurációján semmit sem változtat, a **következő betöltéskor** mégis a 2-es verziót
+kapja, mert az alias egy szerepet nevez meg, nem egy verziót. Ami már a memóriában van,
+az viszont nem cserélődik magától: egy szerver, amely korábban betöltötte a 4-est, addig
+azt szolgálja ki, amíg újra nem tölti a modellt. Ez a rollback registry-oldali fele, a
+kiszolgáló oldali átállás a 10. hét témája.
+
+### 2. Hogyan tudná meg egy auditor egy hónap múlva, hogy a 4-es volt a champion?
+
+A registry magától **nem tárol alias-történetet**. A `registered_model_aliases` tábla csak a
+jelenlegi állapotot ismeri (`champion → 2`), abból semmi sem utal arra, hogy a 4-es valaha
+aktív volt. Az auditor csak a verzió-tagekből rakhatja össze:
+
+- a 4-es verzión a `promoted_at = 2026-09-27T16:42:06+00:00` mutatja, mikor lett aktív;
+- a `rolled_back_at = 2026-09-27T16:49:37+00:00`, a `rolled_back_to = 2` és a
+  `rollback_reason` mutatja, mikor, mire és miért vették le.
+
+Ha a `roll_back` nem írna tageket, csak a `promoted_at` maradna, vagyis az auditor annyit
+látna, hogy a 4-es valamikor promotálva lett, de azt nem, hogy meddig volt aktív, és hogy
+miért nem az már.
+
+A saját registrym ennél jobban meg is mutatja a rést. A 3-as verzió 16:37:58-tól 16:42:06-ig
+szintén champion volt, de mivel a 4-es promóciója nem írt semmit a 3-asra (a
+`promote_to_staging` csak az új verziót tageli), erre ma **semmi sem utal közvetlenül**.
+Csak abból lehetne kikövetkeztetni, hogy a 3-as és a 4-es `promoted_at` értéke 4 perc
+különbséggel követi egymást. Egy valódi audit trailhez a promóciónak is tagelnie kellene az
+általa leváltott verziót, vagy az alias-mozgatásokat egy külön eseménynaplóba kellene írni.
+
+### 3. Biztonságos rollback-cél volt a 2-es verzió?
+
+Nem igazán. A rollback utáni `make trace` 4. sora:
+
+```text
+4. Git commit:  2814c63  (tree state not recorded: nothing says this commit is the code that ran)
+```
+
+A 2-es verzió átment a `roll_back` ellenőrzésén, mert promotálva volt (`promoted_at`
+létezik). Ez viszont csak azt jelenti, hogy valaki egyszer jóváhagyta, azt nem, hogy
+visszakövethető. A forrás-runja a Exercise 6 Part 3 előtt futott, ezért nincs `git_dirty`
+tagje, és ahogy a Exercise 6/2. válaszban kiderült, a `2814c63` commit nem is tartalmazta a
+sweep-ciklust, amely ezt a runt létrehozta. Ha a 2-es is hibásnak bizonyulna, a hibát nem
+lehetne visszakeresni a kódban.
+
+A modell maga valószínűleg jó (ugyanazok a metrikái, mint a clean 4-esnek, és betölthető),
+de "known-good" csak a tesztelt viselkedés szempontjából, a származás szempontjából nem.
+A `roll_back` gate ugyanazt a hiányosságot mutatja, mint a `promote_to_staging` (Exercise
+6/3): csak a `promoted_at` taget nézi, a `git_dirty`-t nem. Ugyanígy engedte volna a
+rollbacket a 3-as verzióra is, amelyről a registry kifejezetten tudja, hogy dirty treeből
+futott (`git_dirty = true`). Biztonságosabb gate-nek a `git_dirty = false` feltételt is
+meg kellene követelnie, ez nálam csak a 4-esre teljesül, éppen arra, amelyről visszaálltunk.
+
+## Stretch
+
+A lekérdezések a `diabetes-week3` experiment összes runján futnak: 25 run, ebből három sweep
+(a `2814c63`, az `af138ea` és az `ee794dc` commitból) a szülőikkel és gyerekeikkel, valamint
+az egyedi `make run` futások.
+
+### 1. Minden forest, amelynek a recallja 0.55 fölött van, ROC-AUC szerint csökkenő sorrendben
+
+```bash
+make query FILTER="params.model_family = 'rf' and metrics.recall > 0.55" ORDER_BY="metrics.roc_auc DESC"
+```
+
+Eredmény: 6 run, mind a három `rf-n_estimators=300` (recall 0.5821, ROC-AUC 0.8172) és mind
+a három `rf-n_estimators=100` (recall 0.5522, ROC-AUC 0.8161). Minden konfiguráció három
+sweepből jön vissza azonos metrikákkal, ami a fix seed miatti reprodukálhatóságot is mutatja.
+Egyetlen logreg sincs benne: a legjobb logreg recallja is csak 0.5224.
+
+### 2. Minden run, amely dirty working treeből futott
+
+```bash
+make query FILTER="tags.git_dirty = 'true'" ORDER_BY="attributes.start_time DESC"
+```
+
+Eredmény: 6 run, a `af138ea` commitos sweep gyerekei (ebből jött a dirty 3-as verzió),
+mert a sweep előtt javítottam egy kommentet a `tests/test_tracking.py`-ban.
+
+**Miért nem találhatja meg soha a Part 3 előtti runokat?** Mert azokon a `git_dirty` tag
+egyáltalán **nem létezik**, nem `'false'`, hanem hiányzik. A `tags.git_dirty = 'true'`
+szűrő csak olyan runokat ad vissza, amelyeken a tag létezik és az értéke `'true'`; a
+hiányzó tag nem egyenlő semmivel. A 25 runból 6 dirty, 6 clean, 13 runon pedig nincs ilyen
+tag, pedig ezek mind nem commitolt kódból futottak. Ezt az információt a futás pillanatában
+kellett volna rögzíteni. Utólag nem lehet pótolni, mert a working tree akkori állapota már
+nincs meg sehol. A lekérdezés nem tud olyan tényt megtalálni, amit sosem jegyeztünk fel.
+
+### 3. Kézzel hozzáadott tag keresése
+
+A UI-ban a `07851a8d48ee4a00921d1e4063538bb9` run (a clean 4-es verzió forrása) Overview
+fülén a Tags résznél kézzel hozzáadtam a `reviewed = yes` taget, majd:
+
+```bash
+make query FILTER="tags.reviewed = 'yes'"
+```
+
+Eredmény: pontosan az az egy run jön vissza. A kézzel, a UI-ból felvett tag ugyanúgy
+kereshető, mint a kódból logolt, mert mindkettő ugyanabba a Postgres táblába kerül. A tag
+nem csak a pipeline-é: egy ember is utólag felcímkézhet egy runt (például átnézte,
+kizárandó, bemutatóra szánt), és a címke onnantól szerver-oldali lekérdezéssel
+visszakereshető.

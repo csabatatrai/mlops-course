@@ -26,8 +26,8 @@ def test_registration_creates_version_with_run_id(live_settings, staging_version
     assert int(staging_version.version) >= 1
     assert staging_version.run_id, "ModelVersion.run_id is empty — register from a run"
 
-
-@pytest.mark.skip(reason="Exercise 6 — implement promote_to_staging(), then delete this skip marker.")
+#! kész
+# @pytest.mark.skip(reason="Exercise 6 — implement promote_to_staging(), then delete this skip marker.")
 def test_alias_resolves_to_version(live_settings, staging_version) -> None:
     """Exercise 6: the alias points at the promoted version.
 
@@ -41,8 +41,8 @@ def test_alias_resolves_to_version(live_settings, staging_version) -> None:
     assert live_settings.model_alias in staging_version.aliases
     assert "champion" in staging_version.aliases
 
-
-@pytest.mark.skip(reason="Exercise 6 — implement promote_to_staging() and trace_alias(), then delete this skip marker.")
+#! kész
+# @pytest.mark.skip(reason="Exercise 6 — implement promote_to_staging() and trace_alias(), then delete this skip marker.")
 def test_alias_traceability_chain(live_settings, staging_version) -> None:
     """Exercise 6: alias -> version -> run -> the params that produced it."""
     chain = trace_alias(live_settings)
@@ -61,8 +61,8 @@ def test_alias_traceability_chain(live_settings, staging_version) -> None:
     # The human half of the evidence: why this version.
     assert chain["version_tags"]["promotion_reason"] == "pytest session"
 
-
-@pytest.mark.skip(reason="Exercise 6 — implement promote_to_staging(), then delete this skip marker.")
+#! kész
+# @pytest.mark.skip(reason="Exercise 6 — implement promote_to_staging(), then delete this skip marker.")
 def test_aliased_model_loads_and_predicts(live_settings, staging_version) -> None:
     """Exercise 6: models:/<name>@<alias> loads with NO object-store credentials.
 
@@ -93,8 +93,8 @@ def rollback_registry(live_settings, sweep_results):
     registry.promote_to_staging(settings, second, reason="second champion")
     return settings, first, second, unpromoted
 
-
-@pytest.mark.skip(reason="Exercise 7 — implement roll_back(), then delete this skip marker.")
+#! kész
+# @pytest.mark.skip(reason="Exercise 7 — implement roll_back(), then delete this skip marker.")
 def test_rollback_refuses_unpromoted_target(rollback_registry) -> None:
     """Exercise 7: a version that never passed promotion is not a rollback target."""
     settings, _, _, unpromoted = rollback_registry
@@ -112,7 +112,8 @@ def test_rollback_refuses_unpromoted_target(rollback_registry) -> None:
     assert after == before, "a refused rollback must not move the alias"
 
 
-@pytest.mark.skip(reason="Exercise 7 — implement roll_back(), then delete this skip marker.")
+#! kész
+# @pytest.mark.skip(reason="Exercise 7 — implement roll_back(), then delete this skip marker.")
 def test_rollback_moves_both_aliases_and_records_why(rollback_registry) -> None:
     """Exercise 7: both aliases move back, and the demoted version says why."""
     settings, first, second, _ = rollback_registry
