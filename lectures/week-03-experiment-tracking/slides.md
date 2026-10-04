@@ -240,7 +240,7 @@ traceability slide later depends on.
 | Output | Where it goes | Why |
 | --- | --- | --- |
 | <span v-click="1">Params, metrics, tags</span> | <span v-click="3">**Postgres** — backend store</span> | <span v-click="4">Small, structured, queryable</span> |
-| <span v-click="2">Artifacts, the model</span> | <span v-click="5">**MinIO** — artifact store</span> | <span v-click="6">Large opaque blobs, fetched whole</span> |
+| <span v-click="2">Artifacts, the model</span> | <span v-click="5">**Silo** — artifact store</span> | <span v-click="6">Large opaque blobs, fetched whole</span> |
 
 
 ---
@@ -1032,7 +1032,7 @@ Let that sit for a beat. It is the same shape as the Epic argument: a record exi
 Week 4 closes the last link:
 
 - **DVC**: dataset snapshots tracked by content hash, with a tiny `.dvc` pointer file committed to Git
-- **MinIO as the S3-compatible DVC remote** — the same object store from Week 2, now holding data as well as artifacts
+- **Silo as the S3-compatible DVC remote** — the same object store from Week 2, now holding data as well as artifacts
 - `dvc.yaml` pipeline stages, so prepare → train → evaluate becomes a declared, reproducible graph
 - **linking a data version to an MLflow run**, so the chain reaches from `@staging` all the way to the bytes
 

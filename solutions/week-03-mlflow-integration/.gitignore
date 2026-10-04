@@ -1,0 +1,17 @@
+# Environment and secrets — never commit
+.env
+
+# Python virtual environment and caches
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+*.pyo
+*.egg-info/
+
+# Docker Compose volumes directory (if using bind mounts)
+volumes/
+
+# Build artifacts
+build/
+dist/

@@ -86,7 +86,7 @@ block at the bottom, and set `MLFLOW_MODEL_OWNER` to your own name — it gets r
 governance tag when you promote a model. **Never commit `.env`** — it is git-ignored.
 
 Notice what is *absent* from the client config: any `AWS_*` credentials. Your pipeline
-talks only to the tracking server, which holds the MinIO keys and proxies artifacts on your
+talks only to the tracking server, which holds the Silo keys and proxies artifacts on your
 behalf.
 
 ## Step 3 — Run the tests (no stack required)
@@ -110,7 +110,7 @@ This is the Week 2 stack, unchanged. All four services must report healthy.
 | Service | URL | Credentials |
 | --- | --- | --- |
 | MLflow UI | http://localhost:5500 | none |
-| MinIO console | http://localhost:5511 | `MINIO_ROOT_USER` / `MINIO_ROOT_PASSWORD` from `.env` |
+| Silo console | http://localhost:5511 | `S3_ACCESS_KEY` / `S3_SECRET_KEY` from `.env` |
 | Postgres | `localhost:5532` | `POSTGRES_USER` / `POSTGRES_PASSWORD` from `.env` |
 
 The MLflow experiment list should be **empty**. This lab is a separate Compose project with
@@ -353,7 +353,7 @@ git commit -m "week03: roll back, written answers, and the stretch queries"
 
 ## Where the artifacts actually live
 
-Open the MinIO console (http://localhost:5511) and browse the `mlflow-artifacts` bucket.
+Open the Silo console (http://localhost:5511) and browse the `mlflow-artifacts` bucket.
 Run artifacts and model artifacts sit in **different prefixes**:
 
 ```
@@ -423,12 +423,12 @@ starter/
 | `UserWarning: Hint: Inferred schema contains integer column(s)` | Expected. `infer_signature` notices that integer columns cannot carry missing values. Our dataset hides its missing values as zeros — deliberately, until Week 5. Leave it alone. |
 | Nothing appears in the MLflow UI | Confirm the stack is healthy (`docker compose ps`) and that `MLFLOW_TRACKING_URI` in `.env` is `http://127.0.0.1:5500`. |
 | `RuntimeWarning: More than 20 figures have been opened` | You are missing `plt.close(figure)` after each `mlflow.log_figure` — the sweep opens 12 figures. |
-| Want to start completely over | `docker compose down -v && docker compose up -d --wait`. This wipes both the Postgres metadata and the MinIO artifacts. |
+| Want to start completely over | `docker compose down -v && docker compose up -d --wait`. This wipes both the Postgres metadata and the Silo artifacts. |
 
 ## Next steps
 
 Walk your traceability chain all the way back and it stops at `data/diabetes.csv` — a
 **path**. Nothing you recorded this week says which bytes were in that file.
 Edit one row and every metric above becomes obsolete. Week 4 closes that gap with DVC:
-dataset snapshots tracked by content hash, MinIO as the storage remote, and a data version
+dataset snapshots tracked by content hash, Silo as the storage remote, and a data version
 linked to each MLflow run.
