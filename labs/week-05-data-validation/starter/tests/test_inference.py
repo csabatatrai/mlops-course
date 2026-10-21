@@ -21,12 +21,9 @@ def test_load_payload_accepts_a_json_string_or_a_file(tmp_path) -> None:
 # ── The serving contract (Exercise 3) ────────────────────────────────────────
 
 
-@pytest.mark.skip(reason="Exercise 3 — write ModelInput and to_nullable, then delete this skip marker.")
 def test_the_example_request_is_legal() -> None:
     assert inference.validate_payload(inference.EXAMPLE_PAYLOAD)["passed"]
 
-
-@pytest.mark.skip(reason="Exercise 3 — write ModelInput and to_nullable, then delete this skip marker.")
 @pytest.mark.parametrize(
     "name, check",
     [
@@ -41,8 +38,6 @@ def test_each_bad_request_fails_its_check(name, check) -> None:
         f"The {name} request should fail {check}; the report has {report['by_check']}."
     )
 
-
-@pytest.mark.skip(reason="Exercise 3 — write ModelInput and to_nullable, then delete this skip marker.")
 def test_an_extra_field_is_rejected() -> None:
     report = inference.validate_payload({**inference.EXAMPLE_PAYLOAD, "smoker": 1})
     assert "column_in_schema" in report["by_check"]
