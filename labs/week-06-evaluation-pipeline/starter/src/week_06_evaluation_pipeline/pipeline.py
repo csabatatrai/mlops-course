@@ -236,12 +236,12 @@ def evaluate(settings: Settings) -> dict:
     features, labels, _ = prepare_model_input(frame)
     metrics = evaluate_model(model, features, labels)
 
-    # TODO(student) Exercise 1: fill in the arguments of `slice_report` below, in order:
-    # the raw test frame (`frame`, not `features`, which has no sentinel zeros left),
-    # the labels, the predicted classes, the predicted probabilities of the
-    # positive class, and the slice specs from `settings`.
     slices = slice_report(
-        frame, labels, model.predict(features), None, {}
+        frame,
+        labels,
+        model.predict(features),
+        model.predict_proba(features)[:, 1],
+        settings.slice_specs,
     )
 
     settings.metrics_path.parent.mkdir(parents=True, exist_ok=True)
